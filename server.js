@@ -14,12 +14,15 @@ app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
-  })
+  }),
 );
 
 const userRoutes = require("./routes/userroutes");
 app.use("/api/user", userRoutes);
-
+const productroutes = require("./routes/productroutes");
+app.use("/api/products", productroutes);
+const cartroutes = require("./routes/cartRoutes");
+app.use("/api/cart", cartroutes);
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("MongoDB connected"))
