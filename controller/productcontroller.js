@@ -1,6 +1,6 @@
 const Product = require("../model/productmodel");
 
-// Create product
+
 exports.createproduct = async (req, res) => {
   try {
     const product = await Product.create(req.body);
@@ -10,17 +10,34 @@ exports.createproduct = async (req, res) => {
   }
 };
 
-// Get all products
 exports.getallproducts = async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const { category, search } = req.query;
+
+    let query = {};
+
+
+    if (category) {
+      query.category = category;
+    }
+
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const products = await Product.find(query).sort({ createdAt: -1 });
     res.json({ products });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Get single product
+
+
 exports.getsingleproducts = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -33,7 +50,7 @@ exports.getsingleproducts = async (req, res) => {
   }
 };
 
-// Update product
+
 exports.updateproducts = async (req, res) => {
   try {
     const product = await Product.findByIdAndUpdate(
@@ -51,7 +68,7 @@ exports.updateproducts = async (req, res) => {
   }
 };
 
-// Delete product
+
 exports.deleteproduct = async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);

@@ -4,7 +4,6 @@ const jwt = require("jsonwebtoken");
 const { registerschema } = require("../validators/authValidator");
 const { createAccessToken, createRefreshToken } = require("../utils/token");
 
-// REGISTER stays same (minor cleanup)
 exports.register = async (req, res) => {
  try{
    const { error } = registerschema.validate(req.body);
@@ -25,7 +24,7 @@ exports.register = async (req, res) => {
  }
 };
 
-// LOGIN
+
 exports.login = async (req, res) => {
 try{
     const { email, password } = req.body;
@@ -45,8 +44,8 @@ try{
 res.cookie("refreshToken", refreshToken, {
   httpOnly: true,
   sameSite: "lax",
-  secure: false, // localhost only
-  path: "/",     // VERY IMPORTANT
+  secure: false, 
+  path: "/",    
   maxAge: 7 * 24 * 60 * 60 * 1000,
 });
 
@@ -62,7 +61,7 @@ catch(err){
 }
 };
 
-// REFRESH
+
 exports.refreshToken = async (req, res) => {
 try{
 const token = req.cookies.refreshToken;
