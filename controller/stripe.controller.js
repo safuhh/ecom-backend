@@ -1,52 +1,35 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Product = require("../model/productmodel");
+const Cart = require("../model/cartmodel");
+
 
 exports.createCheckoutSession = async (req, res) => {
   try {
-    const { productId, products } = req.body;
+    const { products, address } = req.body;
 
-    let line_items = [];
-
-    // ✅ Single product
-    if (productId) {
-      const product = await Product.findById(productId);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
-      }
-
-      line_items.push({
-        price_data: {
-          currency: "inr",
-          product_data: { name: product.name },
-          unit_amount: Math.round(product.price * 100),
-        },
-        quantity: 1,
-      });
+    if (!products || products.length === 0) {
+      return res.status(400).json({ message: "No products" });
     }
 
-    // ✅ Cart products
-    else if (products && products.length > 0) {
-      const productIds = products.map(p => p.productId);
+    let totalAmount = 0;
 
-      const dbProducts = await Product.find({ _id: { $in: productIds } });
+    const line_items = await Promise.all(
+      products.map(async (item) => {
+        const product = await Product.findById(item.productId);
+        if (!product) throw new Error("Product not found");
 
-      line_items = dbProducts.map(prod => {
-        const cartItem = products.find(
-          p => p.productId.toString() === prod._id.toString()
-        );
+        totalAmount += product.price * item.quantity;
 
         return {
           price_data: {
             currency: "inr",
-            product_data: { name: prod.name },
-            unit_amount: Math.round(prod.price * 100),
+            product_data: { name: product.name },
+            unit_amount: Math.round(product.price * 100),
           },
-          quantity: cartItem.quantity,
+          quantity: item.quantity,
         };
-      });
-    } else {
-      return res.status(400).json({ message: "No products provided" });
-    }
+      })
+    );
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -54,24 +37,36 @@ exports.createCheckoutSession = async (req, res) => {
       line_items,
       success_url: `${process.env.CLIENT_URL}/complete?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.CLIENT_URL}/cart`,
+      metadata: {
+        userId: req.user._id.toString(),
+        products: JSON.stringify(products),
+        address: JSON.stringify(address),
+        totalAmount: totalAmount.toString(),
+      },
     });
 
     res.json({ url: session.url });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Stripe session creation failed" });
+    res.status(500).json({ message: err.message });
   }
 };
 
 exports.getSessionStatus = async (req, res) => {
   try {
-    const session = await stripe.checkout.sessions.retrieve(
-      req.query.session_id
-    );
+    const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+    res.json({ payment_status: session.payment_status });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-    res.json({
-      payment_status: session.payment_status,
-    });
+exports.clearCart = async (req, res) => {
+  try {
+    await Cart.findOneAndUpdate(
+      { userId: req.user.id },
+      { products: [] }
+    );
+    res.json({ message: "Cart cleared" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

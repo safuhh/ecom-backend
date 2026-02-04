@@ -31,6 +31,12 @@ try{
 
   const user = await User.findOne({ email });
   if (!user) return res.status(400).json({ message: "User not found" });
+  if (user.isBlocked) {
+  return res.status(403).json({
+    message: "Account blocked by admin"
+  });
+}
+
 
   const match = await bcrypt.compare(password, user.password);
   if (!match) return res.status(400).json({ message: "Wrong password" });
@@ -75,6 +81,12 @@ if (!token) return res.status(401).json({ message: "No refresh token" });
   if (!user || user.refreshToken !== token) {
     return res.status(403).json({ message: "Invalid refresh token" });
   }
+
+if (user.isBlocked) {
+  return res.status(403).json({
+    message: "Account blocked by admin"
+  });
+}
 
   const newAccessToken = createAccessToken(user);
   res.json({ token: newAccessToken });

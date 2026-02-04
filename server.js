@@ -26,14 +26,21 @@ const productRoutes = require("./routes/productroutes");
 const cartRoutes = require("./routes/cartRoutes");
 const wishlistRoutes = require("./routes/wishlistroutes");
 const striperoutes = require("./routes/stripe.routes");
-
+const orderroutes = require("./routes/orderoutes")
+const adminroutes = require("./routes/adminroutes")
+const dashboard = require("./routes/Dashboardrroutes")
+const adminOrderRoutes = require("./routes/adminOrderRoutes");
+const graphroutes = require("./routes/graphroutes")
 app.use("/api/user", userRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
-;app.use("/api/stripe", striperoutes);
-
-// database
+app.use("/api/stripe", striperoutes);
+app.use("/api/orders", orderroutes);
+app.use("/api",adminroutes);
+app.use("/api/admin",dashboard)
+app.use("/api/admin", adminOrderRoutes);
+app.use("/api/admin",graphroutes)
 mongoose
   .connect(process.env.MONGO_URL)
   .then(() => console.log("MongoDB connected"))
