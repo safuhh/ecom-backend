@@ -4,7 +4,7 @@ exports.getMonthlyRevenue = async (req, res) => {
   try {
     const revenue = await Order.aggregate([
       {
-        // ✅ ONLY REAL REVENUE
+        //  ONLY REAL REVENUE
         $match: {
           paymentStatus: "paid",
           orderStatus: { $ne: "cancelled" },

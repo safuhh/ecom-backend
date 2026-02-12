@@ -15,17 +15,26 @@ exports.verifyPaymentAndCreateOrder = async (req, res) => {
       userId: session.metadata.userId,
       products: JSON.parse(session.metadata.products),
       address: JSON.parse(session.metadata.address),
-      totalAmount: session.metadata.totalAmount,
+      totalAmount: Number(session.metadata.totalAmount),
       paymentStatus: "paid",
-      orderStatus: "pending", // 👈 DELIVERY NOT STARTED
+      orderStatus: "pending",
       stripeSessionId: session.id,
     });
+
+    
+    if (session.metadata.checkoutType === "cart") {
+      await Cart.findOneAndUpdate(
+        { userId: session.metadata.userId },
+        { products: [] }
+      );
+    }
 
     res.json({ message: "Order placed", order });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 exports.cancelOrder = async (req, res) => {
   try {
@@ -42,7 +51,6 @@ exports.cancelOrder = async (req, res) => {
       return res.json({ message: "Already cancelled" });
     }
 
-    // 🔥 FIX
     order.orderStatus = "cancelled";
 
     await order.save();

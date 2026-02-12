@@ -53,7 +53,7 @@ exports.getsingleproducts = async (req, res) => {
 
 exports.updateproducts = async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(
+    const product = await Product.findByIdAndUpdate(  
       req.params.id,
       req.body,
       { new: true, runValidators: true }

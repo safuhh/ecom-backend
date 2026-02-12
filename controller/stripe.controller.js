@@ -1,15 +1,15 @@
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Product = require("../model/productmodel");
-const Cart = require("../model/cartmodel");
-
+const { checkoutSchema } = require("../validators/checkoutValidation");
 
 exports.createCheckoutSession = async (req, res) => {
   try {
-    const { products, address } = req.body;
-
-    if (!products || products.length === 0) {
-      return res.status(400).json({ message: "No products" });
+    const { error, value } = checkoutSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
     }
+
+    const { products, address, checkoutType } = value;
 
     let totalAmount = 0;
 
@@ -42,6 +42,7 @@ exports.createCheckoutSession = async (req, res) => {
         products: JSON.stringify(products),
         address: JSON.stringify(address),
         totalAmount: totalAmount.toString(),
+        checkoutType, 
       },
     });
 
@@ -51,9 +52,11 @@ exports.createCheckoutSession = async (req, res) => {
   }
 };
 
+// payment status checking
 exports.getSessionStatus = async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+    // paid or unpaid going frontend
     res.json({ payment_status: session.payment_status });
   } catch (err) {
     res.status(500).json({ message: err.message });

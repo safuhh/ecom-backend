@@ -1,20 +1,21 @@
 const Order = require("../model/ordermodel");
 
-// Get all orders
 exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find()
-      .populate("userId", "email")
+      .populate("userId", "email role")
       .populate("products.productId", "name price imageUrl")
       .sort({ createdAt: -1 });
 
-    res.json({ orders });
+    res.status(200).json({
+      success: true,
+      orders,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// Update order status (Admin)
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -24,29 +25,22 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // ✅ CASE 1: Admin cancels a PAID order → refund
     if (status === "cancelled" && order.paymentStatus === "paid") {
       order.orderStatus = "cancelled";
       order.refundStatus = "refunded";
-    }
-
-    // ✅ CASE 2: Admin re-delivers a cancelled order → undo refund
-    else if (status === "delivered") {
+    } else if (status === "delivered") {
       order.orderStatus = "delivered";
-
       if (order.paymentStatus === "paid") {
-        order.refundStatus = "none"; // 🔥 THIS WAS MISSING
+        order.refundStatus = "none";
       }
-    }
-
-    // Normal flow
-    else {
+    } else {
       order.orderStatus = status;
     }
 
     await order.save();
 
     res.json({
+      success: true,
       message: "Order status updated successfully",
       order,
     });

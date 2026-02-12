@@ -1,11 +1,11 @@
 const Cart = require("../model/cartmodel");
 const Product = require("../model/productmodel");
 
-
 exports.getcart = async (req, res) => {
   try {
-    const cart = await Cart.findOne({ userId: req.user.id })
-      .populate("products.productId");
+    const cart = await Cart.findOne({ userId: req.user.id }).populate(
+      "products.productId",
+    );
 
     res.json(cart || { products: [] });
   } catch (err) {
@@ -13,7 +13,6 @@ exports.getcart = async (req, res) => {
     res.status(500).json({ message: "Item not getting" });
   }
 };
-
 
 exports.addtocart = async (req, res) => {
   try {
@@ -25,7 +24,6 @@ exports.addtocart = async (req, res) => {
         .json({ message: "Product and quantity are required" });
     }
 
-  
     const productExists = await Product.findById(productId);
     if (!productExists) {
       return res.status(404).json({ message: "Product not found" });
@@ -34,7 +32,6 @@ exports.addtocart = async (req, res) => {
     let cart = await Cart.findOne({ userId: req.user.id });
 
     if (!cart) {
-      
       if (quantity < 0) {
         return res.status(400).json({ message: "Invalid operation" });
       }
@@ -48,7 +45,7 @@ exports.addtocart = async (req, res) => {
     }
 
     const existingProduct = cart.products.find(
-      (p) => p.productId.toString() === productId
+      (p) => p.productId.toString() === productId,
     );
 
     if (existingProduct) {
@@ -56,11 +53,10 @@ exports.addtocart = async (req, res) => {
 
       if (existingProduct.quantity <= 0) {
         cart.products = cart.products.filter(
-          (p) => p.productId.toString() !== productId
+          (p) => p.productId.toString() !== productId,
         );
       }
     } else {
-
       if (quantity < 0) {
         return res.status(400).json({ message: "Invalid operation" });
       }
@@ -76,8 +72,6 @@ exports.addtocart = async (req, res) => {
   }
 };
 
-
-
 exports.removecart = async (req, res) => {
   try {
     const { productId } = req.body;
@@ -88,7 +82,7 @@ exports.removecart = async (req, res) => {
     }
 
     cart.products = cart.products.filter(
-      (p) => p.productId.toString() !== productId
+      (p) => p.productId.toString() !== productId,
     );
 
     await cart.save();
@@ -98,4 +92,3 @@ exports.removecart = async (req, res) => {
     res.status(500).json({ message: "Remove cart not working" });
   }
 };
-
